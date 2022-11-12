@@ -4,6 +4,13 @@
     <OutputType>library</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <LangVersion>latest</LangVersion>
+
+    <!-- Creating nuget package stuff -->
+    <PackageId>subhendu.1z4r3al1.22.10.24.001.Test</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>canlasla,ayshon,fontan10</Authors>
+    <Company>Focall</Company>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
