@@ -16,8 +16,8 @@ public class CanilleraGraphTests
         var v1 = Guid.NewGuid();
         var v2 = Guid.NewGuid();
 
-        Assert.False(graph.AddEdge(new Edge(v1, v2)));
-        Assert.False(graph.EdgeCounts().ContainsKey(new Edge(v1, v2)));
+        Assert.False(graph.AddEdge(new CanilleraGraph.Edge(v1, v2)));
+        Assert.False(graph.EdgeCounts().ContainsKey(new CanilleraGraph.Edge(v1, v2)));
     }
 
     [Fact]
@@ -218,13 +218,13 @@ public class CanilleraGraphMsgTests
 
         graph1.AddVertex(v1);
         graph1.AddVertex(v2);
-        graph1.AddEdge(new Edge(v1, v2));
+        graph1.AddEdge(new CanilleraGraph.Edge(v1, v2));
 
         graph2.AddVertex(v1);
         graph2.AddVertex(v2);
         graph2.AddVertex(v3);
-        graph2.AddEdge(new Edge(v1, v2));
-        graph2.AddEdge(new Edge(v2, v3));
+        graph2.AddEdge(new CanilleraGraph.Edge(v1, v2));
+        graph2.AddEdge(new CanilleraGraph.Edge(v2, v3));
 
         var encodedMsg2 = graph2.GetLastSynchronizedUpdate().Encode();
         CanilleraGraphMsg decodedMsg2 = new();

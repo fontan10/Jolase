@@ -6,36 +6,16 @@ using System.Text.Json.Serialization;
 
 namespace MergeSharp;
 
-public struct Edge
-{
-    public Guid src { get; }
-    public Guid dst { get; }
-    public Edge(Guid v1, Guid v2)
-    {
-        this.src = v1;
-        this.dst = v2;
-    }
-
-    public Edge(string s)
-    {
-        var guids = s.Split('_');
-        this.src = Guid.ParseExact(guids[0], "D");
-        this.dst = Guid.ParseExact(guids[1], "D");
-    }
-
-    public override string ToString() => $"{this.src}_{this.dst}";
-}
-
 [TypeAntiEntropyProtocol(typeof(CanilleraGraph))]
 public class CanilleraGraphMsg : PropagationMessage
 {
     [JsonInclude]
-    public ORSetMsg<Guid> verticesMsg  { get; private set; }
+    public ORSetMsg<Guid> verticesMsg { get; private set; }
 
     [JsonInclude]
     // JsonInclude is incompatible with CDictionaryMsg<(Guid, Guid)>,
     // so represent the (Guid, Guid) as a string
-    public CDictionaryMsg<string> edgesMsg  { get; private set; }
+    public CDictionaryMsg<string> edgesMsg { get; private set; }
 
     public CanilleraGraphMsg()
     {
@@ -64,6 +44,26 @@ public class CanilleraGraphMsg : PropagationMessage
 [ReplicatedType("CanilleraGraph")]
 public class CanilleraGraph : CRDT
 {
+    public readonly struct Edge
+    {
+        public Guid src { get; }
+        public Guid dst { get; }
+        public Edge(Guid v1, Guid v2)
+        {
+            this.src = v1;
+            this.dst = v2;
+        }
+
+        public Edge(string s)
+        {
+            var guids = s.Split('_');
+            this.src = Guid.ParseExact(guids[0], "D");
+            this.dst = Guid.ParseExact(guids[1], "D");
+        }
+
+        public override string ToString() => $"{this.src}_{this.dst}";
+    }
+
     private readonly ORSet<Guid> _vertices;
     private readonly CDictionary<string> _edges;
 
@@ -134,10 +134,10 @@ public class CanilleraGraph : CRDT
     public Dictionary<Edge, int> EdgeCounts()
     {
         var result = new Dictionary<Edge, int>();
-        foreach (var e in this._edges.Keys)
+        foreach (KeyValuePair<string, int> kv in this._edges)
         {
-            var edge = new Edge(e);
-            result.Add(edge, this.EdgeCount(edge));
+            var edge = new Edge(kv.Key);
+            result.Add(edge, Math.Max(kv.Value, 0));
         }
 
         return result;
@@ -146,19 +146,19 @@ public class CanilleraGraph : CRDT
     public int EdgeCount(Edge edge)
     {
         var eStr = edge.ToString();
-        if (!this._edges.ContainsKey(eStr))
+        if (this._edges.TryGetValue(eStr, out int numEdges))
         {
-            return 0;
+            return Math.Max(numEdges, 0);
         }
 
-        return Math.Max(this._edges[eStr], 0);
+        return 0;
     }
 
     public override void ApplySynchronizedUpdate(PropagationMessage receivedUpdate)
     {
         if (receivedUpdate is not CanilleraGraphMsg)
         {
-            throw new NotSupportedException($"{System.Reflection.MethodBase.GetCurrentMethod().Name} does not support receivedUpdate type of {receivedUpdate.GetType()}");
+            throw new NotSupportedException($"{System.Reflection.MethodBase.GetCurrentMethod().Name} does not support {nameof(receivedUpdate)} type of {receivedUpdate.GetType()}");
         }
 
         CanilleraGraphMsg received = (CanilleraGraphMsg) receivedUpdate;
