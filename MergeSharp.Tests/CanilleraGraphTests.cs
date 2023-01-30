@@ -9,7 +9,7 @@ namespace MergeSharp.Tests;
 public class CanilleraGraphTests
 {
     [Fact]
-    public void CGraphSingle()
+    public void SingleGraphFalseyChecks()
     {
         CanilleraGraph graph = new();
 
@@ -21,7 +21,7 @@ public class CanilleraGraphTests
     }
 
     [Fact]
-    public void CGraphSingle2()
+    public void SingleGraphMultipleSameEdge()
     {
         CanilleraGraph graph = new();
 
@@ -36,7 +36,7 @@ public class CanilleraGraphTests
     }
 
     [Fact]
-    public void CGraphSingle3()
+    public void SingleGraphMultipleSameVertexAdd()
     {
         CanilleraGraph graph = new();
 
@@ -50,7 +50,7 @@ public class CanilleraGraphTests
     }
 
     [Fact]
-    public void CGMerge()
+    public void SecondGraphMatchFirst()
     {
         CanilleraGraph cg1 = new CanilleraGraph();
         CanilleraGraph cg2 = new CanilleraGraph();
@@ -84,8 +84,16 @@ public class CanilleraGraphTests
 
         cg2.ApplySynchronizedUpdate(cg1.GetLastSynchronizedUpdate());
 
+        // both sync'd graphs:
+        // v1 -> v2
+
         cg1.AddEdge(v1, v2);
         cg2.AddEdge(v1, v2);
+
+        // both graphs added their own second edge:
+        // v1 ---> v2
+        //  |       ^
+        //  |_______|
 
         cg1.ApplySynchronizedUpdate(cg2.GetLastSynchronizedUpdate());
         cg2.ApplySynchronizedUpdate(cg1.GetLastSynchronizedUpdate());
@@ -95,6 +103,7 @@ public class CanilleraGraphTests
         Assert.Equal(2, cg2.LookupVertices().Count());
         Assert.Equal(3, cg2.EdgeCounts().Sum(x => x.Value));
 
+        // should only remove a single edge out of the three
         cg2.RemoveEdge(v1, v2);
         Assert.Equal(2, cg2.EdgeCounts().Sum(x => x.Value));
     }
@@ -122,26 +131,25 @@ public class CanilleraGraphComplicatedTests
     {
         cg1.AddVertex(v1);
         cg1.AddVertex(v2);
+        cg1.AddEdge(v1, v2);
 
         cg2.AddVertex(v3);
         cg2.AddVertex(v4);
 
-
-        cg1.AddEdge(v1, v2);
         cg1.ApplySynchronizedUpdate(cg2.GetLastSynchronizedUpdate());
 
         cg1.AddEdge(v1, v3);
 
         cg2.ApplySynchronizedUpdate(cg1.GetLastSynchronizedUpdate());
 
-        Assert.Equal(cg1.LookupVertices().OrderBy(x => x), cg2.LookupVertices().OrderBy(x => x));
-        Assert.Equal(cg1.EdgeCounts().OrderBy(x => x.Key.ToString()), cg2.EdgeCounts().OrderBy(x => x.Key.ToString()));
+        Assert.Equal(cg1.LookupVertices().OrderBy(x => x), cg2.LookupVertices().OrderBy(x => x)); // graphs should have the same vertices
+        Assert.Equal(cg1.EdgeCounts().OrderBy(x => x.Key.ToString()), cg2.EdgeCounts().OrderBy(x => x.Key.ToString())); // graphs should have the same number of edges
         Assert.Equal(cg1.LookupVertices().Count(), 4);
-        Assert.Equal(cg1.EdgeCounts().Sum(x => x.Value), 2);
+        Assert.Equal(cg1.EdgeCounts().Sum(x => x.Value), 2); // total of 2 edges in the graph
     }
 
     [Fact]
-    public void Merge2()
+    public void ConcurrentRemoveVertexAndAddEdge()
     {
         cg1.AddVertex(v1);
         cg1.AddVertex(v2);
@@ -161,13 +169,15 @@ public class CanilleraGraphComplicatedTests
     }
 
     [Fact]
-    public void Merge3()
+    public void MultipleConcurrentAddAndRemoveEdges()
     {
         cg1.AddVertex(v1);
         cg1.AddEdge(v1, v1);
 
         cg2.ApplySynchronizedUpdate(cg1.GetLastSynchronizedUpdate());
         cg3.ApplySynchronizedUpdate(cg1.GetLastSynchronizedUpdate());
+
+        // All graphs have v1 and edge from v1->v1
 
         cg1.AddEdge(v1, v1);
         cg2.AddEdge(v1, v1);
@@ -181,7 +191,7 @@ public class CanilleraGraphComplicatedTests
     }
 
     [Fact]
-    public void Merge4()
+    public void AddEdgeWithNegativeCount()
     {
         cg1.AddVertex(v1);
         cg1.AddEdge(v1, v1);
@@ -197,7 +207,7 @@ public class CanilleraGraphComplicatedTests
         cg1.ApplySynchronizedUpdate(cg3.GetLastSynchronizedUpdate());
 
         Assert.Equal(cg1.LookupVertices().Count(), 1);
-        Assert.Equal(cg1.EdgeCounts().Sum(x => x.Value), 0);
+        Assert.Equal(cg1.EdgeCounts().Sum(x => x.Value), 0); // count should not be negative
 
         cg1.AddEdge(v1, v1);
         Assert.Equal(cg1.EdgeCounts().Sum(x => x.Value), 1);
