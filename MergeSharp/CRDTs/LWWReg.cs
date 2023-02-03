@@ -55,7 +55,8 @@ public class LWWRegister<T> : CRDT
 
     public LWWRegister()
     {
-        this.Value = default;
+        this._value = default;
+        this._timestamp = DateTime.MinValue;
         this._replicaIdx = Guid.NewGuid();
     }
 
