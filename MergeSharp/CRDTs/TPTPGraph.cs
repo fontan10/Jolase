@@ -28,14 +28,14 @@ public class TPTPGraphMsg : PropagationMessage
 
     public override void Decode(byte[] input)
     {
-        var (verticesMsg, edgesMsg) = JsonSerializer.Deserialize<(TPSetMsg<Guid>, TPSetMsg<(Guid, Guid)>)>(input);
-        this._verticesMsg = verticesMsg;
-        this._edgesMsg = edgesMsg;
+        var json = JsonSerializer.Deserialize<TPTPGraphMsg>(input);
+        this._verticesMsg = json._verticesMsg;
+        this._edgesMsg = json._edgesMsg;
     }
 
     public override byte[] Encode()
     {
-        return JsonSerializer.SerializeToUtf8Bytes((this._verticesMsg, this._edgesMsg));
+        return JsonSerializer.SerializeToUtf8Bytes(this);
     }
 }
 
@@ -76,7 +76,8 @@ public class TPTPGraph : CRDT
     {
         var vertices = this.LookupVertices();
 
-        if (!vertices.Contains(v1) || !vertices.Contains(v2)) {
+        if (!vertices.Contains(v1) || !vertices.Contains(v2))
+        {
             return false;
         }
 
@@ -125,7 +126,8 @@ public class TPTPGraph : CRDT
 
 
 
-    public override void ApplySynchronizedUpdate(PropagationMessage receivedUpdate){
+    public override void ApplySynchronizedUpdate(PropagationMessage receivedUpdate)
+    {
         if (receivedUpdate is not TPTPGraphMsg)
         {
             throw new NotSupportedException($"ApplySynchronizedUpdate does not support receivedUpdate type of {receivedUpdate.GetType()}");
@@ -136,13 +138,15 @@ public class TPTPGraph : CRDT
         this._vertices.ApplySynchronizedUpdate(received._verticesMsg);
     }
 
-    public override PropagationMessage DecodePropagationMessage(byte[] input) {
+    public override PropagationMessage DecodePropagationMessage(byte[] input)
+    {
         TPTPGraphMsg msg = new();
         msg.Decode(input);
         return msg;
     }
 
-    public override PropagationMessage GetLastSynchronizedUpdate() {
+    public override PropagationMessage GetLastSynchronizedUpdate()
+    {
         return new TPTPGraphMsg(this._vertices, this._edges);
     }
 }

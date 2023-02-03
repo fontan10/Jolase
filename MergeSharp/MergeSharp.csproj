@@ -7,7 +7,7 @@
 
     <!-- Creating nuget package stuff -->
     <PackageId>subhendu.1z4r3al1.22.10.24.001.Test</PackageId>
-    <Version>1.1.1</Version>
+    <Version>1.1.2</Version>
     <Authors>canlasla,ayshon,fontan10</Authors>
     <Company>Focall</Company>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
