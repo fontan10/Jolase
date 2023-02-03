@@ -66,11 +66,11 @@ public class TPTPGraphTests
         first.RemoveVertex(v1);
         second.AddEdge(v1, v2);
 
-        Assert.Equal(new [] {v2}, first.LookupVertices());
+        Assert.Equal(new[] { v2 }, first.LookupVertices());
         Assert.Empty(first.LookupEdges());
 
-        Assert.Equal(new HashSet<Guid> {v1, v2}, second.LookupVertices().ToHashSet());
-        Assert.Equal(new [] {(v1, v2)}, second.LookupEdges());
+        Assert.Equal(new HashSet<Guid> { v1, v2 }, second.LookupVertices().ToHashSet());
+        Assert.Equal(new[] { (v1, v2) }, second.LookupEdges());
 
         first.ApplySynchronizedUpdate(second.GetLastSynchronizedUpdate());
         second.ApplySynchronizedUpdate(first.GetLastSynchronizedUpdate());
@@ -78,7 +78,7 @@ public class TPTPGraphTests
         Assert.Equal(first.LookupVertices(), second.LookupVertices());
         Assert.Equal(first.LookupEdges(), second.LookupEdges());
 
-        Assert.Equal(new [] {v2}, first.LookupVertices());
+        Assert.Equal(new[] { v2 }, first.LookupVertices());
         Assert.Empty(first.LookupEdges());
     }
 
@@ -110,7 +110,30 @@ public class TPTPGraphTests
         Assert.Equal(first.LookupVertices(), second.LookupVertices());
         Assert.Equal(first.LookupEdges(), second.LookupEdges());
 
-        Assert.Equal(new [] {v2}, first.LookupVertices());
+        Assert.Equal(new[] { v2 }, first.LookupVertices());
         Assert.Empty(first.LookupEdges());
+    }
+}
+
+public class TPTPGraphMsgTests
+{
+    [Fact]
+    public void EncodeDecode()
+    {
+        TPTPGraph graph1 = new();
+        var v1 = Guid.NewGuid();
+        graph1.AddVertex(v1);
+
+        TPTPGraph graph2 = new();
+        var v2 = Guid.NewGuid();
+        graph2.AddVertex(v2);
+
+        var encodedMsg2 = graph2.GetLastSynchronizedUpdate().Encode();
+        TPTPGraphMsg decodedMsg2 = new();
+        decodedMsg2.Decode(encodedMsg2);
+
+        graph1.ApplySynchronizedUpdate(decodedMsg2);
+
+        Assert.Equal(graph1.LookupVertices(), new List<Guid> { v1, v2 });
     }
 }

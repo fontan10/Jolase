@@ -22,7 +22,8 @@ internal class ProxyBuilder
 
     public ProxyBuilder()
     {
-        this.aName = new AssemblyName("CRDTClassProxyAssembly");
+        // assembly name should be CRDTClassProxyAssembly + random string
+        this.aName = new AssemblyName("CRDTClassProxyAssembly" + Guid.NewGuid().ToString()); 
         this.ab = AssemblyBuilder.DefineDynamicAssembly(aName, AssemblyBuilderAccess.Run);
         this.mb = ab.DefineDynamicModule(aName.Name + ".dll");
         // TODO: maybe check AppDomain for hot swap of types
@@ -38,7 +39,7 @@ internal class ProxyBuilder
         // for each method in methods, if it has TestStuffAttribute, print it
         foreach (var method in methods)
         {
-            var op = MethodValidator.Validate(method);
+            var op = MethodValidator.Validate(method, type);
             if (op == OpType.Update)
             {
                 result.Add(method);
