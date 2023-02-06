@@ -45,6 +45,10 @@ public class TPTPGraph : CRDT
     private readonly TPSet<Guid> _vertices;
     private readonly TPSet<(Guid, Guid)> _edges;
 
+    public IEnumerable<Guid> Vertices => this.LookupVertices();
+
+    public IEnumerable<(Guid, Guid)> Edges => this.LookupEdges();
+
     public TPTPGraph()
     {
         this._vertices = new TPSet<Guid>();
@@ -92,7 +96,7 @@ public class TPTPGraph : CRDT
     }
 
 
-    public IEnumerable<(Guid, Guid)> LookupEdges()
+    private IEnumerable<(Guid, Guid)> LookupEdges()
     {
         List<(Guid, Guid)> edges = new();
         List<(Guid, Guid)> existingEdges = this._edges.LookupAll();
@@ -109,7 +113,7 @@ public class TPTPGraph : CRDT
         return edges;
     }
 
-    public IEnumerable<Guid> LookupVertices()
+    private IEnumerable<Guid> LookupVertices()
     {
         return this._vertices.LookupAll();
     }
