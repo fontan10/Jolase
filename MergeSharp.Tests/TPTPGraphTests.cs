@@ -2,7 +2,7 @@ using Xunit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace MergeSharp.Tests;
 
@@ -15,23 +15,23 @@ public class TPTPGraphTests
         var v1 = Guid.NewGuid();
         var v2 = Guid.NewGuid();
         Assert.False(graph.AddEdge(v1, v2));
-        Assert.Empty(graph.LookupEdges());
+        Assert.Empty(graph.Edges);
 
         graph.AddVertex(v1);
-        Assert.Equal(graph.LookupVertices(), new[] { v1 });
+        Assert.Equal(graph.Vertices, new[] { v1 });
 
         Assert.False(graph.AddEdge(v1, v2));
         Assert.False(graph.AddEdge(v2, v1));
 
         graph.AddVertex(v2);
-        Assert.Equal(graph.LookupVertices().ToHashSet(), new HashSet<Guid> { v1, v2 });
+        Assert.Equal(graph.Vertices.ToHashSet(), new HashSet<Guid> { v1, v2 });
 
         Assert.True(graph.AddEdge(v1, v2));
         Assert.True(graph.AddEdge(v1, v2));
         Assert.True(graph.AddEdge(v1, v1));
         Assert.True(graph.AddEdge(v2, v1));
 
-        Assert.Equal(graph.LookupEdges().ToHashSet(),
+        Assert.Equal(graph.Edges.ToHashSet(),
                         new HashSet<(Guid, Guid)> {
                             (v1, v2),
                             (v1, v1),
@@ -66,20 +66,20 @@ public class TPTPGraphTests
         first.RemoveVertex(v1);
         second.AddEdge(v1, v2);
 
-        Assert.Equal(new[] { v2 }, first.LookupVertices());
-        Assert.Empty(first.LookupEdges());
+        Assert.Equal(new[] { v2 }, first.Vertices);
+        Assert.Empty(first.Edges);
 
-        Assert.Equal(new HashSet<Guid> { v1, v2 }, second.LookupVertices().ToHashSet());
-        Assert.Equal(new[] { (v1, v2) }, second.LookupEdges());
+        Assert.Equal(new HashSet<Guid> { v1, v2 }, second.Vertices.ToHashSet());
+        Assert.Equal(new[] { (v1, v2) }, second.Edges);
 
         first.ApplySynchronizedUpdate(second.GetLastSynchronizedUpdate());
         second.ApplySynchronizedUpdate(first.GetLastSynchronizedUpdate());
 
-        Assert.Equal(first.LookupVertices(), second.LookupVertices());
-        Assert.Equal(first.LookupEdges(), second.LookupEdges());
+        Assert.Equal(first.Vertices, second.Vertices);
+        Assert.Equal(first.Edges, second.Edges);
 
-        Assert.Equal(new[] { v2 }, first.LookupVertices());
-        Assert.Empty(first.LookupEdges());
+        Assert.Equal(new[] { v2 }, first.Vertices);
+        Assert.Empty(first.Edges);
     }
 
     [Fact]
@@ -107,11 +107,37 @@ public class TPTPGraphTests
         first.ApplySynchronizedUpdate(second.GetLastSynchronizedUpdate());
         second.ApplySynchronizedUpdate(first.GetLastSynchronizedUpdate());
 
-        Assert.Equal(first.LookupVertices(), second.LookupVertices());
-        Assert.Equal(first.LookupEdges(), second.LookupEdges());
+        Assert.Equal(first.Vertices, second.Vertices);
+        Assert.Equal(first.Edges, second.Edges);
 
-        Assert.Equal(new[] { v2 }, first.LookupVertices());
-        Assert.Empty(first.LookupEdges());
+        Assert.Equal(new[] { v2 }, first.Vertices);
+        Assert.Empty(first.Edges);
+    }
+
+    [Fact]
+    public void JsonTPTPGraph()
+    {
+        TPTPGraph graph = new();
+        var v1 = Guid.NewGuid();
+        var v2 = Guid.NewGuid();
+
+        graph.AddVertex(v1);
+        graph.AddVertex(v2);
+
+        graph.AddEdge(v1, v2);
+        graph.AddEdge(v2, v1);
+
+        // NOTE: we cannot deserialize the string back into a TPTPGraph because
+        // it does not contain all the info needed (private _vertices or _edges)
+        // it just contains the public IEnumerable Vertices and Edges
+        string jsonString = JsonConvert.SerializeObject(graph);
+        Assert.Contains("\"Vertices\":[", jsonString);
+        Assert.Contains(v1.ToString(), jsonString);
+        Assert.Contains(v2.ToString(), jsonString);
+
+        Assert.Contains("\"Edges\":[", jsonString);
+        Assert.Contains($"{{\"Item1\":\"{v1.ToString()}\",\"Item2\":\"{v2.ToString()}\"}}", jsonString);
+        Assert.Contains($"{{\"Item1\":\"{v2.ToString()}\",\"Item2\":\"{v1.ToString()}\"}}", jsonString);
     }
 }
 
@@ -134,6 +160,6 @@ public class TPTPGraphMsgTests
 
         graph1.ApplySynchronizedUpdate(decodedMsg2);
 
-        Assert.Equal(graph1.LookupVertices(), new List<Guid> { v1, v2 });
+        Assert.Equal(graph1.Vertices, new List<Guid> { v1, v2 });
     }
 }
